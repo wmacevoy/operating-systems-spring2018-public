@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
       printf("unknown function\n");
       exit(1);
     }
-    printf("usage: integrate <a=0.0> <b=1.0> <n=100> <f=x^2|sin(x)>\n");
+    printf("usage: integrate-mt <a=0.0> <b=1.0> <n=100> <njobs=4> <f=x^2|sin(x)>\n");
     exit(0);
   }
   
