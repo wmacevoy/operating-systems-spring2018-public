@@ -3,8 +3,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <unistd.h>
 
 typedef double real_function_t(double);
+
+double numeric = 0; /* tunnel */
+pthread_mutex_t numeric_mutex; /* semaphore */
+
 
 double f(double x) {
   double y = pow(x,2);
@@ -41,14 +46,22 @@ struct job_struct {
   double a;
   double b;
   int n;
-  double A;
+  double *A;
   pthread_t thread;
 };
 typedef struct job_struct job_t;
 
 void* worker(void *arg) {
   job_t *job = (job_t*) arg;
-  job->A = integrate(job->integrand,job->a,job->b,job->n);
+  double area = integrate(job->integrand,job->a,job->b,job->n);  
+  // critical section start (uses numeric)
+  pthread_mutex_lock(&numeric_mutex);
+  double A = *(job->A);
+  usleep(rand()%10000);
+  A = A + area;
+  *(job->A) = A;
+  pthread_mutex_unlock(&numeric_mutex);  
+  // critical section end (uses numeric)
   return 0;
 }
 
@@ -60,7 +73,8 @@ int main(int argc, char *argv[]) {
   char *name="x^2";
   real_function_t *integrand = &f;
   real_function_t *integral = &F;
-
+  
+  pthread_mutex_init(&numeric_mutex,NULL);
   for (int i=1; i<argc; ++i) {
     if (strncmp(argv[i],"a=",2)==0) { a=atof(argv[i]+2); continue; }
     if (strncmp(argv[i],"b=",2)==0) { b=atof(argv[i]+2); continue; }
@@ -82,11 +96,18 @@ int main(int argc, char *argv[]) {
   for (int i=0; i<njobs; ++i) {
     jobs[i].a = a + (b-a)*((double) i/((double) njobs));
     jobs[i].b = a + (b-a)*((double) (i+1)/((double) njobs));
-    jobs[i].n = n/njobs;
+    int j0 = (int) (n*((double) i/((double) njobs)));
+    int j1 = (int) (n*((double)(i+1)/((double) njobs)));    
+    jobs[i].n = j1-j0;
     jobs[i].integrand = integrand;
-    jobs[i].A = 0;
+    jobs[i].A = &numeric;
   }
 
+  // critical section start (uses numeric)
+  pthread_mutex_lock(&numeric_mutex);  
+  numeric = 0;
+  pthread_mutex_unlock(&numeric_mutex);    
+  // critical section start (uses numeric)  
   for (int i=0; i<njobs; ++i) {
     pthread_create(&jobs[i].thread, 0, worker, &jobs[i]);
   }
@@ -95,17 +116,21 @@ int main(int argc, char *argv[]) {
     pthread_join(jobs[i].thread, 0);
   }
 
-  double numeric = 0;
-  for (int i=0; i<njobs; ++i) {
-    numeric = numeric + jobs[i].A;
-  }
+  //  double numeric = 0;
+  //for (int i=0; i<njobs; ++i) {
+  //  numeric = numeric + jobs[i].A;
+  //}
 
+  // critical section start (uses numeric)
+  pthread_mutex_lock(&numeric_mutex);  
   double exact   = integral(b)-integral(a);
   double abserr  = fabs(numeric-exact);
   double relerr  = fabs(numeric-exact)/fabs(exact);
+  pthread_mutex_unlock(&numeric_mutex);    
+  // critical section start (uses numeric)  
 
   printf("f=%s a=%lf b=%lf n=%d njobs=%d numeric=%lf exact=%lg abserr=%lg relerr=%lg\n",
 	 name,a,b,n,njobs,numeric,exact,abserr,relerr);
-  
+  pthread_mutex_destroy(&numeric_mutex);  
   return 0;
 }
