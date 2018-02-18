@@ -18,10 +18,10 @@ bin/integrate-mt : tmp/integrate-mt.o
 	gcc -o bin/integrate-mt tmp/integrate-mt.o -lm -lpthread
 
 tmp/integrate-mt-cpp.o : src/integrate-mt-cpp.cpp
-	g++ -std=c++17 -c -o tmp/integrate-mt-cpp.o src/integrate-mt-cpp.cpp
+	g++ -g -std=c++11 -c -o tmp/integrate-mt-cpp.o src/integrate-mt-cpp.cpp
 
 bin/integrate-mt-cpp : tmp/integrate-mt-cpp.o
-	g++ -std=c++17 -o bin/integrate-mt-cpp tmp/integrate-mt.o -lm -lpthread
+	g++ -g -std=c++11 -o bin/integrate-mt-cpp tmp/integrate-mt-cpp.o -lm -lpthread
 
 clean:
 	/bin/rm -rf tmp/* bin/*

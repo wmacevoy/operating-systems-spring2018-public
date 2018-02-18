@@ -4,6 +4,8 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
+#include <new>
 
 #include <thread>
 #include <mutex>
@@ -47,6 +49,15 @@ double integrate(real_function_t *f, double a, double b, int n) {
   return ans;
 }
 
+void _usleep(int micros) {
+  if (rand() % 100 == 0) {
+    printf("pthread_exit\n");
+    pthread_exit(NULL);
+  }
+  usleep(micros);
+}
+
+
 struct Job {
   real_function_t *integrand;
   double a;
@@ -56,14 +67,16 @@ struct Job {
 
   std::thread *thread;
 
-  Job() { thread = 0; }
+  Job() {
+    thread = 0;
+  }
 
   void work() {
     double area = integrate(integrand,a,b,n);
     {
       numeric_guard guard;
       double total = *A;
-      usleep(rand()%10000);
+      _usleep(rand()%10000);
       total = total + area;
       *A = total;
     }
@@ -96,6 +109,8 @@ int main(int argc, char *argv[]) {
   const char *name="x^2";
   real_function_t *integrand = &f;
   real_function_t *integral = &F;
+  
+  srand(time(0));
   
   for (int i=1; i<argc; ++i) {
     if (strncmp(argv[i],"a=",2)==0) { a=atof(argv[i]+2); continue; }
@@ -130,7 +145,7 @@ int main(int argc, char *argv[]) {
     numeric_guard guard;
     numeric = 0;
   }
-  // critical section start (uses numeric)  
+  // critical section end (uses numeric)  
   for (int i=0; i<njobs; ++i) {
     jobs[i].start();
   }
@@ -139,7 +154,7 @@ int main(int argc, char *argv[]) {
     jobs[i].join();
   }
 
-  delete jobs;
+  delete [] jobs;
 
   double exact;
   double abserr;
