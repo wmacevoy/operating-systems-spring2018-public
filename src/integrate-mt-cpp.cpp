@@ -12,8 +12,14 @@
 
 typedef double real_function_t(double);
 
-double numeric = 0;
-std::recursive_mutex numeric_mutex;
+double numeric = 0; // shared resource
+std::recursive_mutex numeric_mutex; // corresponding mutex
+
+//struct numeric_guard {
+//  numeric_gaurd() { numeric_mutex.lock(); }
+//  ~numeric_gaurd() { numeric_mutex.unlock(); }  
+//};
+
 struct numeric_guard
   : std::lock_guard < std::recursive_mutex > {
   numeric_guard() : std::lock_guard < std::recursive_mutex> (numeric_mutex) {}
