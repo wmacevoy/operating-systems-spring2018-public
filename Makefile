@@ -23,6 +23,9 @@ tmp/integrate-mt-cpp.o : src/integrate-mt-cpp.cpp
 bin/integrate-mt-cpp : tmp/integrate-mt-cpp.o
 	g++ -g -std=c++17 -o bin/integrate-mt-cpp tmp/integrate-mt-cpp.o -lm -lpthread
 
+bin/Integrate.class : src/Integrate.java
+	javac -d bin -s src src/Integrate.java
+
 clean:
 	/bin/rm -rf tmp/* bin/*
 
