@@ -5,6 +5,12 @@ tmp/forkexec.o : src/forkexec.c
 bin/forkexec : tmp/forkexec.o
 	gcc -o bin/forkexec tmp/forkexec.o
 
+tmp/shared-memory.o : src/shared-memory.cpp
+	g++ -g -c -o tmp/shared-memory.o src/shared-memory.cpp
+
+bin/shared-memory : tmp/shared-memory.o
+	g++ -g -o bin/shared-memory tmp/shared-memory.o
+
 tmp/integrate-st.o : src/integrate-st.c
 	gcc -c -o tmp/integrate-st.o src/integrate-st.c
 
